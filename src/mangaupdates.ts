@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js"
 import { SEARCHING_EMBED } from "./embeds"
+import type { RequestResult } from "./@types/discord.t"
 
 
 const SEARCH_SERIES_API = 'https://api.mangaupdates.com/v1/series/search'
@@ -41,7 +42,7 @@ const getSearchResultList = async (query: string, allowExplicit: boolean): Promi
 }
 
 const parseResultList = async (results: any[]) => {
-    const parsedResults = [] as any[];
+    const parsedResults = [] as RequestResult[];
 
     results.forEach(result => {
         parsedResults.push({

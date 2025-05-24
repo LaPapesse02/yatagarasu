@@ -10,3 +10,9 @@ export interface Command {
     data: SlashCommandBuilder,
     execute: Function
 }
+
+export interface RequestResult {
+    id: number,
+    title: string,
+    year: string
+}
