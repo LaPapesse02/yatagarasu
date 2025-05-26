@@ -1,8 +1,9 @@
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js"
-import { SEARCHING_EMBED } from "./embeds"
+import { generateResultListEmbed, SEARCHING_EMBED } from "./embeds"
 import type { RequestResult } from "./@types/discord.t"
 
 
+const MAX_RESULT_LIST_LENGTH = 10
 const SEARCH_SERIES_API = 'https://api.mangaupdates.com/v1/series/search'
 
 export const search = async (interaction: ChatInputCommandInteraction) => {
@@ -21,6 +22,9 @@ export const search = async (interaction: ChatInputCommandInteraction) => {
     )
 
     const parsedResults = await parseResultList(results.results as object[]);
+    const resultEmbed = generateResultListEmbed(parsedResults);
+
+    interaction.editReply({ embeds: [ resultEmbed ] });
 }
 
 const getSearchResultList = async (query: string, allowExplicit: boolean): Promise<object> => {
@@ -44,7 +48,7 @@ const getSearchResultList = async (query: string, allowExplicit: boolean): Promi
 const parseResultList = async (results: any[]) => {
     const parsedResults = [] as RequestResult[];
 
-    results.forEach(result => {
+    results.slice(0, MAX_RESULT_LIST_LENGTH).forEach(result => {
         parsedResults.push({
             id: result.record.series_id,
             title: result.record.title,
