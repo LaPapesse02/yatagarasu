@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, ComponentType, EmbedBuilder, InteractionCallbackResponse, MessageFlags } from "discord.js"
-import { generateResultListComponents, generateResultListEmbed, SEARCHING_EMBED } from "./embeds"
+import { generateResultListComponents, generateResultListEmbed, generateSeriesInfoEmbed, SEARCHING_EMBED } from "./embeds"
 import type { RequestResult } from "./@types/discord.t"
 
 
@@ -77,7 +77,9 @@ const handleInteraction = async (response: InteractionCallbackResponse, interact
         if (interaction.customId === 'result_selection') {
             const seriesInfo = await getSeriesInfo(interaction.values[0]!)
             const parsedInfo = await parseSeriesInfo(seriesInfo)
-            // TODO: display series info to user
+            const seriesInfoEmbed = generateSeriesInfoEmbed(parsedInfo)
+            
+            interaction.reply({ embeds: [ seriesInfoEmbed ], components: [ ] })
         }
     })
 }
