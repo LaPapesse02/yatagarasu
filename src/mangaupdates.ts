@@ -34,6 +34,7 @@ const getSearchResultList = async (query: string, allowExplicit: boolean): Promi
     };
     if (!allowExplicit) {
         requestBody.exclude_genre.push('Hentai');
+        requestBody.exclude_genre.push('Smut');
     }
 
     const response = await fetch(SEARCH_SERIES_API, {
