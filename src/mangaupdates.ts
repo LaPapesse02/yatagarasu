@@ -1,10 +1,11 @@
-import { ChatInputCommandInteraction, EmbedBuilder, InteractionCallbackResponse, MessageFlags } from "discord.js"
+import { ChatInputCommandInteraction, ComponentType, EmbedBuilder, InteractionCallbackResponse, MessageFlags } from "discord.js"
 import { generateResultListComponents, generateResultListEmbed, SEARCHING_EMBED } from "./embeds"
 import type { RequestResult } from "./@types/discord.t"
 
 
 const MAX_RESULT_LIST_LENGTH = 10
 const SEARCH_SERIES_API = 'https://api.mangaupdates.com/v1/series/search'
+const SERIES_API = 'https://api.mangaupdates.com/v1/series'
 const INTERACTION_TIMEOUT = 60
 
 export const search = async (interaction: ChatInputCommandInteraction) => {
@@ -66,16 +67,37 @@ const parseResultList = async (results: any[]) => {
 }
 
 const handleInteraction = async (response: InteractionCallbackResponse, interaction: ChatInputCommandInteraction, originalEmbed: EmbedBuilder) => {
-    const collectorFilter = (i: any) => i.user.id === interaction.user.id;
+    const collector = response.resource?.message?.createMessageComponentCollector({
+        componentType: ComponentType.StringSelect,
+        filter: (i: any) => i.user.id === interaction.user.id,
+        time: INTERACTION_TIMEOUT * 1_000
+    })
 
-    try {
-        const confirmation = await response.resource?.message?.awaitMessageComponent({ filter: collectorFilter, time: INTERACTION_TIMEOUT * 1000 });
-
-        if (confirmation!.customId === 'result_selection') {
-            // TODO: respond to user selection
+    collector?.on('collect', async (interaction) => {
+        if (interaction.customId === 'result_selection') {
+            const seriesInfo = await getSeriesInfo(interaction.values[0]!)
+            const parsedInfo = await parseSeriesInfo(seriesInfo)
+            // TODO: display series info to user
         }
-    } catch {
-        interaction.editReply({embeds: [ originalEmbed.setFooter({ text: `No interaction received within ${INTERACTION_TIMEOUT}s` }) ], components: [] })
-    }
+    })
 }
 
+const getSeriesInfo = async (series_id: string) => {
+    const response = await fetch(`${SERIES_API}/${series_id}`);
+
+    return await response.json() as object;
+}
+
+const parseSeriesInfo = async (response: any) => {
+    return {
+        id: response.series_id,
+        title: response.title,
+        description: response.description,
+        image: response.image.url.original,
+        year: response.year,
+        authors: response.authors.map((author: any) => { return {name: author.name, type: author.type} }),
+        genres: response.genres.map((genre: any) => genre.genre),
+        publisher: response.publishers.filter((publisher: any) => { return publisher.type === 'Original' })[0].publisher_name,
+        latest_chapter: response.latest_chapter
+    }
+}
