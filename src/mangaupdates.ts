@@ -91,6 +91,7 @@ const getSeriesInfo = async (series_id: string) => {
 const parseSeriesInfo = async (response: any) => {
     return {
         id: response.series_id,
+        url: response.url,
         title: response.title,
         description: response.description,
         image: response.image.url.original,
