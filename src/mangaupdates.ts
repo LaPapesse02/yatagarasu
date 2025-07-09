@@ -73,13 +73,13 @@ const handleInteraction = async (response: InteractionCallbackResponse, interact
         time: INTERACTION_TIMEOUT * 1_000
     })
 
-    collector?.on('collect', async (interaction) => {
-        if (interaction.customId === 'result_selection') {
-            const seriesInfo = await getSeriesInfo(interaction.values[0]!)
+    collector?.on('collect', async (collectorInteraction) => {
+        if (collectorInteraction.customId === 'result_selection') {
+            const seriesInfo = await getSeriesInfo(collectorInteraction.values[0]!)
             const parsedInfo = await parseSeriesInfo(seriesInfo)
             const seriesInfoEmbed = generateSeriesInfoEmbed(parsedInfo)
             
-            interaction.reply({ embeds: [ seriesInfoEmbed ], components: [ ] })
+            interaction.editReply({ embeds: [ seriesInfoEmbed ], components: [ ] })
         }
     })
 }
