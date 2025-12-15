@@ -3,7 +3,7 @@ import { REST, Routes } from 'discord.js';
 
 import { Command } from "./src/@types/discord.t";
 
-import { token, clientID, guildID } from './secrets.json';
+import { token, clientID, guildID } from './secrets.yml';
 
 /*
 * Crawls a directory to get all the files inside it
