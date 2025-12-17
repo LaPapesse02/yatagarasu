@@ -3,7 +3,7 @@ import { REST, Routes } from 'discord.js';
 
 import { Command } from "./src/@types/discord.t";
 
-import { token, clientID, guildID } from './secrets.yml';
+import { token, debug } from './secrets.yml';
 
 /*
 * Crawls a directory to get all the files inside it
@@ -91,7 +91,7 @@ const updateCommands = async (commands: Command[]) => {
 
 		// The put method is used to fully refresh all commands in the guild with the current set
 		const data = (await rest.put(
-			Routes.applicationGuildCommands(clientID, guildID),
+			Routes.applicationGuildCommands(debug.clientID, debug.guildID),
 			{ body: commands.map((command) => command.data) }
 		)) as object[];
 
