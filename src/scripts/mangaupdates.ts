@@ -1,7 +1,7 @@
 const SERIES_SEARCH_URL = 'https://api.mangaupdates.com/v1/series/search'
 
 
-const search = async (series: string) => {
+export const search = async (series: string, maxSearchResults: number) => {
     const req = await fetch(
         SERIES_SEARCH_URL,
         {
@@ -15,5 +15,5 @@ const search = async (series: string) => {
         return null;
     }
 
-    return (await req.json()).results;
+    return (await req.json()).results.slice(0, maxSearchResults);
 }
