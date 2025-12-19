@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { search } from './mangaupdates';
 
 
@@ -16,7 +16,8 @@ export const searchCommand = async (interaction: ChatInputCommandInteraction) =>
         return interaction.editReply({ embeds: [ SEARCH_ERROR_EMBED ] });
 
     const resultEmbed = createSearchResultsEmbed(searchResults);
-    interaction.editReply({ embeds: [ resultEmbed ] });
+    const selectMenuRow = createSearchResultButtons(searchResults);
+    interaction.editReply({ embeds: [ resultEmbed ], components: [ selectMenuRow ] });
 }
 
 const createSearchResultsEmbed = (results: [any]) => {
@@ -29,6 +30,23 @@ const createSearchResultsEmbed = (results: [any]) => {
     embed.setDescription(descString);
 
     return embed
+}
+
+const createSearchResultButtons = (results: [any]) => {
+    const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('resultSelection')
+        .setPlaceholder('Choose Series!')
+
+    for (let i = 0; i < results.length; i++) {
+        selectMenu.addOptions(
+            new StringSelectMenuOptionBuilder()
+                .setLabel(`${i+1}. ${shortenString(results[i].record.title, MAX_TITLE_LENGTH)} (${results[i].record.year})`)
+                .setValue(`${results[i].record.series_id}`)
+        
+        )
+    }
+
+    return new ActionRowBuilder().addComponents(selectMenu);
 }
 
 const shortenString = (text: string, maxLength: number) => {
