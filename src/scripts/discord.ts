@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ContainerBuilder, EmbedBuilder, MessageFlags, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
 import { search } from './mangaupdates';
 
 
@@ -15,38 +15,31 @@ export const searchCommand = async (interaction: ChatInputCommandInteraction) =>
     if (searchResults === null) 
         return interaction.editReply({ embeds: [ SEARCH_ERROR_EMBED ] });
 
-    const resultEmbed = createSearchResultsEmbed(searchResults);
-    const selectMenuRow = createSearchResultButtons(searchResults);
-    interaction.editReply({ embeds: [ resultEmbed ], components: [ selectMenuRow ] });
+    const resultComponent = createSearchResultComponent(searchResults);
+    interaction.editReply({ embeds: [ ], components: [ resultComponent ],flags: MessageFlags.IsComponentsV2 })
 }
 
-const createSearchResultsEmbed = (results: [any]) => {
-    const embed = new EmbedBuilder().setTitle('Search Results:');
-    let descString = '';
-
-    for (let i = 0; i < results.length; i++) {
-        descString = descString.concat('\n', `${i+1}. **${shortenString(results[i].record.title, MAX_TITLE_LENGTH)}** (${results[i].record.year})`);
-    }
-    embed.setDescription(descString);
-
-    return embed
-}
-
-const createSearchResultButtons = (results: [any]) => {
+const createSearchResultComponent = (results: [any]) => {
+    const container = new ContainerBuilder();
     const selectMenu = new StringSelectMenuBuilder()
         .setCustomId('resultSelection')
         .setPlaceholder('Choose Series!')
+    let resultString = '## Search results:\n';
 
     for (let i = 0; i < results.length; i++) {
+        resultString = resultString.concat('\n', `${i+1}. **${shortenString(results[i].record.title, MAX_TITLE_LENGTH)}** (${results[i].record.year})`)
         selectMenu.addOptions(
             new StringSelectMenuOptionBuilder()
                 .setLabel(`${i+1}. ${shortenString(results[i].record.title, MAX_TITLE_LENGTH)} (${results[i].record.year})`)
                 .setValue(`${results[i].record.series_id}`)
-        
         )
     }
 
-    return new ActionRowBuilder().addComponents(selectMenu);
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(resultString));
+    container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large));
+    container.addActionRowComponents(new ActionRowBuilder().addComponents(selectMenu));
+
+    return container
 }
 
 const shortenString = (text: string, maxLength: number) => {
