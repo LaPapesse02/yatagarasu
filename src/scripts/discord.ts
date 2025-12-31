@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, Client, ContainerBuilder, EmbedBuilder, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
 import { getSeries, search } from './mangaupdates';
 import { client } from '../index';
+import { checkIfUserSubscribed } from "./database";
 
 
 const MAX_SEARCH_RESULTS = 10;
@@ -26,6 +27,7 @@ export const searchCommand = async (interaction: ChatInputCommandInteraction) =>
     try {
         const selection = await response.resource?.message?.awaitMessageComponent({ filter: collectorFilter });
         series = await generateSeriesContent(selection?.values[0]);
+        series.addActionRowComponents(await generateSeriesButtons(interaction.user.id, selection?.values[0]))
     } catch {
         console.log('error')
     }
@@ -72,6 +74,20 @@ export const generateSeriesContent = async (selection: any) => {
     container.addSeparatorComponents(new SeparatorBuilder().setDivider(false))
     
     return container;
+}
+
+const generateSeriesButtons = async (userId: string | number, seriesId: string | number) => {
+    const backButton = new ButtonBuilder().setCustomId('back').setLabel('<').setStyle(ButtonStyle.Secondary)
+    //console.log(seriesUrl)
+    //const siteButton = new ButtonBuilder().setLabel('View on MangaUpdates').setURL(seriesUrl).setStyle(ButtonStyle.Link)
+    let subButton;
+    const userSubscribed = await checkIfUserSubscribed(userId, seriesId);
+    if (userSubscribed.length)
+        subButton = new ButtonBuilder().setCustomId(`unsub_${seriesId}`).setLabel('Unubscribe!').setStyle(ButtonStyle.Danger);
+    else
+        subButton = new ButtonBuilder().setCustomId(`sub_${seriesId}`).setLabel('Subscribe!').setStyle(ButtonStyle.Primary);
+
+    return new ActionRowBuilder().setComponents(backButton, subButton)
 }
 
 const createSearchResultComponent = (results: [any]) => {
