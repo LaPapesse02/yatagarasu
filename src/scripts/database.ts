@@ -16,7 +16,7 @@ const sql = new SQL({
 
 
 export const checkIfUserSubscribed = async (userId: string | number, seriesId: string | number) => {
-    const results: [ SubscribedSeries ] = await sql`
+    const results: SubscribedSeries[] = await sql`
     SELECT *
     FROM subscribed_series
     WHERE user_id = ${userId}
