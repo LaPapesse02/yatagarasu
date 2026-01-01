@@ -1,6 +1,6 @@
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ContainerBuilder, EmbedBuilder, InteractionCallbackResponse, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
 import { getSeries, search } from './mangaupdates';
-import { checkIfUserSubscribed } from "./database";
+import { addSeriesSubscription, checkIfUserSubscribed, removeSeriesSubscription } from "./database";
 
 
 const MAX_SEARCH_RESULTS = 10;
@@ -70,6 +70,12 @@ const messageInteraction = async (commandInteraction: ChatInputCommandInteractio
             }
 
             if (responseInteraction?.customId === 'back') break;
+            else if (responseInteraction?.customId.startsWith('sub'))
+                await addSeriesSubscription(commandInteraction.user.id, seriesId);
+            else if (responseInteraction?.customId.startsWith('unsub'))
+                await removeSeriesSubscription(commandInteraction.user.id, seriesId);
+            
+            responseInteraction?.deferUpdate();
         }
     }
 }

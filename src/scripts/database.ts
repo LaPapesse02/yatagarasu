@@ -25,3 +25,18 @@ export const checkIfUserSubscribed = async (userId: string | number, seriesId: s
 
     return results;
 }
+
+export const addSeriesSubscription = async (userId: string | number, seriesId: string | number) => {
+    await sql`
+    INSERT INTO subscribed_series
+    VALUES (${userId}, ${seriesId})
+    `;
+}
+
+export const removeSeriesSubscription = async (userId: string | number, seriesId: string | number) => {
+    await sql`
+    DELETE FROM subscribed_series
+    WHERE user_id = ${userId}
+    AND series_id = ${seriesId}
+    `;
+}
