@@ -52,7 +52,7 @@ const messageInteraction = async (commandInteraction: ChatInputCommandInteractio
         
         while (true) {
             const userSubscribed = await checkIfUserSubscribed(commandInteraction.user.id, seriesId);
-            const buttons = await generateSeriesButtons(commandInteraction.user.id, seriesId, seriesInfo.url, !!userSubscribed.length);
+            const buttons = await generateSeriesButtons(commandInteraction.user.id, seriesId, seriesInfo.url, userSubscribed);
 
             seriesMessage.spliceComponents(seriesMessage.components.length - 1, 1, new ActionRowBuilder<ButtonBuilder>().addComponents(buttons));
             commandInteraction.editReply({ components: [ seriesMessage ], files: [ NO_IMAGE_ATTACHMENT ], flags: MessageFlags.IsComponentsV2 });

@@ -23,7 +23,8 @@ export const checkIfUserSubscribed = async (userId: string | number, seriesId: s
     AND series_id = ${seriesId}
     `;
 
-    return results;
+    // returns true if results contains any elements
+    return !!results.length;
 }
 
 export const addSeriesSubscription = async (userId: string | number, seriesId: string | number) => {
