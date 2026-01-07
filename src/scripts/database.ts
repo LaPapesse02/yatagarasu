@@ -149,7 +149,7 @@ export const getCachedSeries = async (seriesId: string | number) => {
     const seriesResponse: Series[] = await sql`
     SELECT *
     FROM series
-    WHERE series_id = ${seriesId}
+    WHERE id = ${seriesId}
     `
     if (!seriesResponse.length) return null;
 
