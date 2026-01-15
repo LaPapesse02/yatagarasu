@@ -3,6 +3,11 @@ export interface SubscribedSeries {
     series_id: string
 }
 
+export interface SubscribedSeriesCache {
+    series_id: string,
+    series_info?: Series
+}
+
 export interface Author {
     series_id: string,
     author_id: string,
@@ -22,8 +27,8 @@ export interface Series {
     description: string | null,
     year: string,
     completed: boolean,
-    genres: Genre[] | undefined,
-    authors: Author[] | undefined,
+    genres?: Genre[],
+    authors?: Author[],
 
     url: string,
     image_url: string,

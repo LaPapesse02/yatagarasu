@@ -1,6 +1,7 @@
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ContainerBuilder, EmbedBuilder, InteractionCallbackResponse, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
 import { getSeries, search } from './mangaupdates';
-import { addSeriesSubscription, checkIfUserSubscribed, removeSeriesSubscription } from "./database";
+import { addSeriesSubscription, cacheSeries, checkIfUserSubscribed, getCachedSeries, getUserSubscriptions, removeSeriesSubscription } from "./database";
+import { Series, SubscribedSeriesCache } from "../@types/database.t";
 
 
 const MAX_SEARCH_RESULTS = 10;
@@ -45,14 +46,14 @@ const messageInteraction = async (commandInteraction: ChatInputCommandInteractio
         if (responseInteraction?.customId !== 'resultSelection') return;
 
         const seriesId = (responseInteraction as StringSelectMenuInteraction).values[0];
-        const seriesInfo: any = await getSeries(seriesId);
+        const seriesInfo = await getCachedOrRequestSeries(seriesId);
         const seriesMessage = await generateSeriesContent(seriesInfo);
         // temporary component that will be removed once inside the next loop
         seriesMessage.addSectionComponents(new SectionBuilder())
         
         while (true) {
             const userSubscribed = await checkIfUserSubscribed(commandInteraction.user.id, seriesId);
-            const buttons = await generateSeriesButtons(commandInteraction.user.id, seriesId, seriesInfo.url, userSubscribed);
+            const buttons = await generateSeriesButtons(commandInteraction.user.id, seriesId, seriesInfo?.url!, userSubscribed);
 
             seriesMessage.spliceComponents(seriesMessage.components.length - 1, 1, new ActionRowBuilder<ButtonBuilder>().addComponents(buttons));
             commandInteraction.editReply({ components: [ seriesMessage ], files: [ NO_IMAGE_ATTACHMENT ], flags: MessageFlags.IsComponentsV2 });
@@ -85,7 +86,7 @@ const messageInteraction = async (commandInteraction: ChatInputCommandInteractio
  * 
  * @param series - the response from the mangaupdates api
  */
-const generateSeriesContent = async (series: any) => {
+const generateSeriesContent = async (series: Series) => {
     // the component that will contain the message
     const container = new ContainerBuilder();
     // the component containing the series' title, release year,
@@ -98,11 +99,11 @@ const generateSeriesContent = async (series: any) => {
     // the api gives different roles to the same author in different
     // objects in the array, so we get them all in a single object per author
     const authors = new Map<string, string[]>();
-    series.authors.forEach((author: any) => {
+    series.authors?.forEach((author) => {
         if (authors.has(author.name))
-            authors.get(author.name)?.push(author.type);
+            authors.get(author.name)?.push(author.role);
         else
-            authors.set(author.name, [ author.type ]);
+            authors.set(author.name, [ author.role ]);
     });
     // we then add the authors and their roles to the title section
     titleText = titleText.concat(
@@ -115,7 +116,7 @@ const generateSeriesContent = async (series: any) => {
 
     titleSection.addTextDisplayComponents(new TextDisplayBuilder().setContent(titleText));
     titleSection.setThumbnailAccessory(
-        (thumbnail) => thumbnail.setURL(series.image.url.original ? series.image.url.original : 'attachment://no_image.jpg')
+        (thumbnail) => thumbnail.setURL(series.image_url)
     );
 
     container.addSectionComponents(titleSection);
@@ -130,7 +131,7 @@ const generateSeriesContent = async (series: any) => {
         // puts an invisible divider between the description and the genres
         container.addSeparatorComponents(new SeparatorBuilder().setDivider(false));
     }
-    const genresText = `**Genres:**\n${series.genres.map((genre: any) => genre.genre).join(', ')}`;
+    const genresText = `**Genres:**\n${series.genres?.map((genre) => genre.genre).join(', ')}`;
     container.addTextDisplayComponents(new TextDisplayBuilder().setContent(genresText));
 
     // adds a divider between the genres and the buttons
@@ -215,6 +216,101 @@ const createSearchResultComponent = (results: any[]) => {
     container.addActionRowComponents(new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu));
 
     return container;
+}
+
+export const subscriptionsCommand = async (interaction: ChatInputCommandInteraction) => {
+    const response = await interaction.reply({ embeds: [ SEARCHING_EMBED ], withResponse: true });
+    const subscribedSeries = await getUserSubscriptions(interaction.user.id);
+    const cachedSubscriptions: SubscribedSeriesCache[] = subscribedSeries.map((series) => ({ series_id: series.series_id }));
+
+    if (cachedSubscriptions.length === 0)
+        return;
+
+    await subscriptionLoop(interaction, response, cachedSubscriptions);
+}
+
+const subscriptionLoop = async (
+    interaction: ChatInputCommandInteraction,
+    response: InteractionCallbackResponse<boolean>,
+    subscriptions: SubscribedSeriesCache[]
+) => {
+    const collectorFilter = (i: any) => i.user.id === interaction.user.id;
+    let index = 0;
+    let message;
+    let buttons;
+    while (true) {
+        if (!subscriptions[index].series_info)
+            subscriptions[index].series_info = await getCachedOrRequestSeries(subscriptions[index].series_id);
+        
+        message = await generateSeriesContent(subscriptions[index].series_info!);
+        buttons = await createSubscriptionButtons(
+            index === 0,
+            index === subscriptions.length - 1,
+            await checkIfUserSubscribed(interaction.user.id, subscriptions[index].series_id),
+            subscriptions[index].series_id
+        )
+        message.addActionRowComponents(new ActionRowBuilder<ButtonBuilder>().addComponents(buttons))
+        interaction.editReply({ embeds: [], components: [ message ], flags: MessageFlags.IsComponentsV2 })
+
+        let responseInteraction;
+        try {
+            responseInteraction = await response.resource?.message?.awaitMessageComponent({ filter: collectorFilter, time: INTERACTION_TIMEOUT });
+            
+        } catch (error) {
+            message.spliceComponents(
+                message.components.length - 1, 
+                1,
+                new TextDisplayBuilder().setContent(`*Interaction timed out after ${INTERACTION_TIMEOUT / 1_000}s*`)
+            );
+            interaction.editReply({ components: [ message ], flags: MessageFlags.IsComponentsV2 })
+            return;
+        }
+
+        if (responseInteraction?.customId === 'prev')
+            index--;
+        else if (responseInteraction?.customId === 'next')
+            index++;
+        else if (responseInteraction?.customId === 'reload') {
+            const subscribedSeries = await getUserSubscriptions(interaction.user.id);
+            subscriptions = subscribedSeries.map((series) => ({ series_id: series.series_id }));
+            index = 0;
+        } else if (responseInteraction?.customId.startsWith('sub'))
+            await addSeriesSubscription(interaction.user.id, subscriptions[index].series_id);
+        else if (responseInteraction?.customId.startsWith('unsub'))
+            await removeSeriesSubscription(interaction.user.id, subscriptions[index].series_id);
+
+        responseInteraction?.deferUpdate();
+    }
+}
+
+const createSubscriptionButtons = async (isFirst: boolean, isLast: boolean, isSubscribed: boolean, seriesId: string | number) => {
+    const prevButton = new ButtonBuilder().setCustomId('prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(isFirst);
+    let subButton;
+    const reloadButton = new ButtonBuilder().setCustomId('reload').setLabel('⟳').setStyle(ButtonStyle.Secondary);
+    if (isSubscribed)
+        subButton = new ButtonBuilder()
+            .setCustomId(`unsub_${seriesId}`)
+            .setLabel('Unubscribe!')
+            .setStyle(ButtonStyle.Danger);
+    else
+        subButton = new ButtonBuilder()
+            .setCustomId(`sub_${seriesId}`)
+            .setLabel('Subscribe!')
+            .setStyle(ButtonStyle.Primary);
+    const nextButton = new ButtonBuilder().setCustomId('next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(isLast);
+
+    return [ prevButton, subButton, reloadButton, nextButton ]
+}
+
+const getCachedOrRequestSeries = async (seriesId: string | number) => {
+    const cachedSeries = await getCachedSeries(seriesId);
+
+    if (cachedSeries && Date.now() - cachedSeries.last_modified.getTime() < 7 * 24 * 60 * 60 * 1000)
+        return cachedSeries;
+
+    const series = await getSeries(seriesId);
+    cacheSeries(series!);
+    return series!; 
 }
 
 /**
