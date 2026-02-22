@@ -15,7 +15,7 @@ const sql = new SQL({
 });
 
 
-export const checkIfUserSubscribed = async (userId: string | number, seriesId: string | number) => {
+export const checkIfUserSubscribed = async (userId: string | number, seriesId: string | number): Promise<boolean> => {
     const results: SubscribedSeries[] = await sql`
     SELECT *
     FROM subscribed_series
@@ -42,7 +42,7 @@ export const removeSeriesSubscription = async (userId: string | number, seriesId
     `;
 }
 
-export const getUserSubscriptions = async (userId: string | number) => {
+export const getUserSubscriptions = async (userId: string | number): Promise<SubscribedSeries[]> => {
     const series: SubscribedSeries[] = await sql`
     SELECT *
     FROM subscribed_series
@@ -52,7 +52,7 @@ export const getUserSubscriptions = async (userId: string | number) => {
     return series;
 }
 
-export const getSubscribedSeries = async () => {
+export const getSubscribedSeries = async (): Promise<string[]> => {
     const result: any[] = await sql`
     SELECT DISTINCT series_id
     FROM subscribed_series
@@ -61,7 +61,7 @@ export const getSubscribedSeries = async () => {
     return result;
 }
 
-export const getUsersSubscribed = async (seriesId: string | number) => {
+export const getUsersSubscribed = async (seriesId: string | number): Promise<string[]> => {
     const result: any[] = await sql`
     SELECT user_id
     FROM subsribed_series
@@ -144,7 +144,7 @@ export const cacheSeries = async (series: Series) => {
     await cacheGenres(series.id, series.genres!);
 }
 
-export const getCachedGenres = async (seriesId: string | number) => {
+export const getCachedGenres = async (seriesId: string | number): Promise<Genre[]> => {
     const response = sql`
     SELECT *
     FROM series_genres
@@ -154,7 +154,7 @@ export const getCachedGenres = async (seriesId: string | number) => {
     return response;
 }
 
-export const getCachedAuthors = async (seriesId: string | number) => {
+export const getCachedAuthors = async (seriesId: string | number): Promise<Author[]> => {
     const response = sql`
     SELECT *
     FROM series_authors
@@ -164,7 +164,7 @@ export const getCachedAuthors = async (seriesId: string | number) => {
     return response;
 }
 
-export const getCachedSeries = async (seriesId: string | number) => {
+export const getCachedSeries = async (seriesId: string | number): Promise<Series | null> => {
     const seriesResponse: Series[] = await sql`
     SELECT *
     FROM series
@@ -179,7 +179,7 @@ export const getCachedSeries = async (seriesId: string | number) => {
     return series;
 }
 
-export const getCachedLatestChapter = async (seriesId: string | number) => {
+export const getCachedLatestChapter = async (seriesId: string | number): Promise<number | null> => {
     const response: any[] = await sql`
     SELECT latest_chapter
     FROM series
