@@ -64,7 +64,7 @@ export const getSubscribedSeries = async (): Promise<{series_id: string}[]> => {
 export const getUsersSubscribed = async (seriesId: string | number): Promise<{user_id: string}[]> => {
     const result: any[] = await sql`
     SELECT user_id
-    FROM subsribed_series
+    FROM subscribed_series
     WHERE series_id = ${seriesId}
     `
 
