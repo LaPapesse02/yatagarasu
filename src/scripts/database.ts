@@ -52,6 +52,25 @@ export const getUserSubscriptions = async (userId: string | number) => {
     return series;
 }
 
+export const getSubscribedSeries = async () => {
+    const result: any[] = await sql`
+    SELECT DISTINCT series_id
+    FROM subscribed_series
+    `
+
+    return result;
+}
+
+export const getUsersSubscribed = async (seriesId: string | number) => {
+    const result: any[] = await sql`
+    SELECT user_id
+    FROM subsribed_series
+    WHERE series_id = ${seriesId}
+    `
+
+    return result;
+}
+
 export const cacheGenres = async (seriesId: string | number, genres: Genre[]) => {
     await sql`
     DELETE FROM series_genres
@@ -158,4 +177,16 @@ export const getCachedSeries = async (seriesId: string | number) => {
     series.authors = await getCachedAuthors(seriesId);
 
     return series;
+}
+
+export const getCachedLatestChapter = async (seriesId: string | number) => {
+    const response: any[] = await sql`
+    SELECT latest_chapter
+    FROM series
+    WHERE id = ${seriesId}
+    `
+
+    if (!response.length) return null;
+    
+    return response[0].latest_chapter;
 }
