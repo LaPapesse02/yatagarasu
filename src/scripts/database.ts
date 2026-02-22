@@ -52,7 +52,7 @@ export const getUserSubscriptions = async (userId: string | number): Promise<Sub
     return series;
 }
 
-export const getSubscribedSeries = async (): Promise<string[]> => {
+export const getSubscribedSeries = async (): Promise<{series_id: string}[]> => {
     const result: any[] = await sql`
     SELECT DISTINCT series_id
     FROM subscribed_series
@@ -61,7 +61,7 @@ export const getSubscribedSeries = async (): Promise<string[]> => {
     return result;
 }
 
-export const getUsersSubscribed = async (seriesId: string | number): Promise<string[]> => {
+export const getUsersSubscribed = async (seriesId: string | number): Promise<{user_id: string}[]> => {
     const result: any[] = await sql`
     SELECT user_id
     FROM subsribed_series
