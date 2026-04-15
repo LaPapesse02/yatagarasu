@@ -1,11 +1,30 @@
+import { Client } from "discord.js";
 import { Series } from "../@types/database.t";
-import { getCachedLatestChapter, getSubscribedSeries, getUsersSubscribed } from "./database"
+import { cacheSeries, getCachedLatestChapter, getSubscribedSeries, getUsersSubscribed } from "./database"
 import { getSeries } from "./mangaupdates";
+import { notifyUsers } from "./discord";
+import { sleep } from "bun";
+
+
+export const updateLoop = async (client: Client) => {
+    let checked = false;
+    
+    while (true) {
+        let currentTime = new Date();
+        if (currentTime.getHours() >= 19 && !checked) {
+            getUpdates(client);
+            checked = true;
+        } else if (checked && currentTime.getHours() < 19) {
+            checked = false;
+        }
+        await sleep(60_000)
+    }
+}
 
 /**
  * returns all series that were updated
  */
-const getUpdates = async () => {
+const getUpdates = async (client: Client) => {
     const updatedSeries: Series[] = [];
     const subscribedSeries = await getSubscribedSeries();
 
@@ -15,7 +34,11 @@ const getUpdates = async () => {
 
         if (seriesInfo?.latest_chapter != cachedChapter)
             updatedSeries.push(seriesInfo)
+            await cacheSeries(seriesInfo)
     }
+
+    const notificationList = await createNotificationLists(updatedSeries);
+    notifyUsers(client, notificationList);
 
 }
 

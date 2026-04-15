@@ -3,6 +3,7 @@ import { readdirSync, lstatSync } from 'node:fs'
 import { Command } from './@types/discord.t';
 
 import { token } from '../secrets.yml';
+import { updateLoop } from './scripts/check_updates';
 
 /*
 * Crawls a directory to get all the files inside it
@@ -121,5 +122,8 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     }
 });
 
-client.once(Events.ClientReady, (c: Client) => console.log(`Logged in as ${c.user?.tag}!`));
+client.once(Events.ClientReady, (c: Client) => {
+    console.log(`Logged in as ${c.user?.tag}!`);
+    updateLoop(c);
+});
 client.login(token)

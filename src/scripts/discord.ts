@@ -1,4 +1,4 @@
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ContainerBuilder, EmbedBuilder, InteractionCallbackResponse, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, Client, ContainerBuilder, EmbedBuilder, InteractionCallbackResponse, MediaGalleryBuilder, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
 import { getSeries, search } from './mangaupdates';
 import { addSeriesSubscription, cacheSeries, checkIfUserSubscribed, getCachedSeries, getUserSubscriptions, removeSeriesSubscription } from "./database";
 import { Series, SubscribedSeriesCache } from "../@types/database.t";
@@ -300,6 +300,37 @@ const createSubscriptionButtons = async (isFirst: boolean, isLast: boolean, isSu
     const nextButton = new ButtonBuilder().setCustomId('next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(isLast);
 
     return [ prevButton, subButton, reloadButton, nextButton ]
+}
+
+const notificationMessage = async (seriesList: Series[]) => {
+    const updates = [];
+
+    for (let series of seriesList) {
+        const container = new ContainerBuilder();
+        
+        const section = new SectionBuilder()
+        const title = new TextDisplayBuilder().setContent(`# ${series.title} (${series.year})`);
+        const description = new TextDisplayBuilder().setContent(`c.${series.latest_chapter} released!`);
+
+        section.addTextDisplayComponents(title);
+        section.addTextDisplayComponents(description);
+        section.setThumbnailAccessory(thumbnail => thumbnail.setURL(series.image_url));
+
+        container.addSectionComponents(section);
+
+        updates.push(container);
+    }
+
+    return updates;
+}
+
+export const notifyUsers = async (client: Client, notificationList: Map<string, Series[]>) => {
+    for (let [id, seriesList] of notificationList) {
+        const user = await client.users.fetch(id);
+        const message = await notificationMessage(seriesList);
+
+        await user.send({ components: message, files: [ NO_IMAGE_ATTACHMENT ], flags: MessageFlags.IsComponentsV2 });
+    }
 }
 
 const getCachedOrRequestSeries = async (seriesId: string | number) => {
