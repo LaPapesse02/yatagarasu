@@ -203,7 +203,7 @@ export const createUpdateMessage = (seriesList: Series[]) => {
     return updates;
 }
 
-export const createUpdateButtons = (isFirst: boolean, isLast: boolean, isSubscribed: boolean) => {
+export const createSubscriptionsButtons = (isFirst: boolean, isLast: boolean, isSubscribed: boolean) => {
     const prevButton = new ButtonBuilder().setCustomId('prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(isFirst);
     let subButton;
     const reloadButton = new ButtonBuilder().setCustomId('reload').setLabel('⟳').setStyle(ButtonStyle.Secondary);

@@ -1,7 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ChatInputCommandInteraction, Client, InteractionCallbackResponse, MessageFlags, TextDisplayBuilder } from "discord.js";
 import { addSeriesSubscription, checkIfUserSubscribed, getCachedOrRequestSeries, getUserSubscriptions, removeSeriesSubscription } from "./database";
 import { Series, SubscribedSeriesCache } from "../@types/database.t";
-import { createSeriesMessage, createUpdateButtons, createUpdateMessage, LOADING_MESSAGE, NO_IMAGE_ATTACHMENT } from "./message_creation";
+import { createSeriesMessage, createSubscriptionsButtons, createUpdateMessage, LOADING_MESSAGE, NO_IMAGE_ATTACHMENT } from "./message_creation";
 
 
 const INTERACTION_TIMEOUT = 60_000; // 1_000 = 1s
@@ -32,7 +32,7 @@ const subscriptionLoop = async (
             subscriptions[index].series_info = await getCachedOrRequestSeries(subscriptions[index].series_id);
         
         message = createSeriesMessage(subscriptions[index].series_info!);
-        buttons = createUpdateButtons(
+        buttons = createSubscriptionsButtons(
             index === 0,
             index === subscriptions.length - 1,
             await checkIfUserSubscribed(interaction.user.id, subscriptions[index].series_id),
