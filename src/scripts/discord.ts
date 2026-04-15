@@ -1,23 +1,24 @@
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, Client, ContainerBuilder, EmbedBuilder, InteractionCallbackResponse, MediaGalleryBuilder, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, Client, ContainerBuilder, InteractionCallbackResponse, MediaGalleryBuilder, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js";
 import { getSeries, search } from './mangaupdates';
 import { addSeriesSubscription, cacheSeries, checkIfUserSubscribed, getCachedSeries, getUserSubscriptions, removeSeriesSubscription } from "./database";
 import { Series, SubscribedSeriesCache } from "../@types/database.t";
+import { ERROR_MESSAGE, LOADING_MESSAGE, NO_RESULTS_MESSAGE } from "./message_creation";
 
 
 const MAX_SEARCH_RESULTS = 10;
 const MAX_TITLE_LENGTH = 50;
 const INTERACTION_TIMEOUT = 60_000; // 1_000 = 1s
 
-const SEARCHING_EMBED = new EmbedBuilder().setTitle('Searching...');
-const SEARCH_ERROR_EMBED = new EmbedBuilder().setColor('Red').setTitle('An error occured while searching!');
 const NO_IMAGE_ATTACHMENT = new AttachmentBuilder('./resources/no_image.jpg');
 
 export const searchCommand = async (interaction: ChatInputCommandInteraction) => {
-    const response = await interaction.reply({ embeds: [ SEARCHING_EMBED ], withResponse: true });
+    const response = await interaction.reply({ components: [ LOADING_MESSAGE ], flags: MessageFlags.IsComponentsV2, withResponse: true });
 
     const searchResults = await search(interaction.options.getString('name')!, MAX_SEARCH_RESULTS);
     if (searchResults === null) 
-        return interaction.editReply({ embeds: [ SEARCH_ERROR_EMBED ] });
+        return interaction.editReply({ components: [ ERROR_MESSAGE ], flags: MessageFlags.IsComponentsV2 });
+    else if (searchResults.length === 0)
+        return interaction.editReply({ components: [ NO_RESULTS_MESSAGE ], flags: MessageFlags.IsComponentsV2 })
 
     const resultComponent = createSearchResultComponent(searchResults);
 
@@ -28,7 +29,7 @@ const messageInteraction = async (commandInteraction: ChatInputCommandInteractio
     const collectorFilter = (i: any) => i.user.id === commandInteraction.user.id;
 
     while (true) {
-        commandInteraction.editReply({ embeds: [ ], components: [ resultsMessage ], flags: MessageFlags.IsComponentsV2 })
+        commandInteraction.editReply({ components: [ resultsMessage ], flags: MessageFlags.IsComponentsV2 })
         let responseInteraction;
         
         try {
@@ -219,7 +220,7 @@ const createSearchResultComponent = (results: any[]) => {
 }
 
 export const subscriptionsCommand = async (interaction: ChatInputCommandInteraction) => {
-    const response = await interaction.reply({ embeds: [ SEARCHING_EMBED ], withResponse: true });
+    const response = await interaction.reply({ components: [ LOADING_MESSAGE ], flags: MessageFlags.IsComponentsV2, withResponse: true });
     const subscribedSeries = await getUserSubscriptions(interaction.user.id);
     const cachedSubscriptions: SubscribedSeriesCache[] = subscribedSeries.map((series) => ({ series_id: series.series_id }));
 
@@ -250,7 +251,7 @@ const subscriptionLoop = async (
             subscriptions[index].series_id
         )
         message.addActionRowComponents(new ActionRowBuilder<ButtonBuilder>().addComponents(buttons))
-        interaction.editReply({ embeds: [], components: [ message ], flags: MessageFlags.IsComponentsV2 })
+        interaction.editReply({ components: [ message ], flags: MessageFlags.IsComponentsV2 })
 
         let responseInteraction;
         try {
