@@ -1,14 +1,12 @@
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ChatInputCommandInteraction, Client, ContainerBuilder, InteractionCallbackResponse, MessageFlags, SectionBuilder, StringSelectMenuInteraction, TextDisplayBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ChatInputCommandInteraction, Client, ContainerBuilder, InteractionCallbackResponse, MessageFlags, SectionBuilder, StringSelectMenuInteraction, TextDisplayBuilder } from "discord.js";
 import { getSeries, search } from './mangaupdates';
 import { addSeriesSubscription, cacheSeries, checkIfUserSubscribed, getCachedSeries, getUserSubscriptions, removeSeriesSubscription } from "./database";
 import { Series, SubscribedSeriesCache } from "../@types/database.t";
-import { createSearchResultMessage, createSeriesButtons, createSeriesMessage, createUpdateButtons, createUpdateMessage, ERROR_MESSAGE, LOADING_MESSAGE, NO_RESULTS_MESSAGE } from "./message_creation";
+import { createSearchResultMessage, createSeriesButtons, createSeriesMessage, createUpdateButtons, createUpdateMessage, ERROR_MESSAGE, LOADING_MESSAGE, NO_IMAGE_ATTACHMENT, NO_RESULTS_MESSAGE } from "./message_creation";
 
 
 const MAX_SEARCH_RESULTS = 10;
 const INTERACTION_TIMEOUT = 60_000; // 1_000 = 1s
-
-const NO_IMAGE_ATTACHMENT = new AttachmentBuilder('./resources/no_image.jpg');
 
 export const searchCommand = async (interaction: ChatInputCommandInteraction) => {
     const response = await interaction.reply({ components: [ LOADING_MESSAGE ], flags: MessageFlags.IsComponentsV2, withResponse: true });

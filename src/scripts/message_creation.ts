@@ -1,8 +1,10 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentBuilder, ContainerBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js"
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ComponentBuilder, ContainerBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js"
 import { Series } from "../@types/database.t";
 
 
 const MAX_TITLE_LENGTH = 50;
+
+export const NO_IMAGE_ATTACHMENT = new AttachmentBuilder('./resources/no_image.jpg');
 
 export const LOADING_MESSAGE = (() => {
     let container = new ContainerBuilder();
