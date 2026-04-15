@@ -1,83 +1,11 @@
-import { ActionRowBuilder, ButtonBuilder, ChatInputCommandInteraction, Client, ContainerBuilder, InteractionCallbackResponse, MessageFlags, SectionBuilder, StringSelectMenuInteraction, TextDisplayBuilder } from "discord.js";
-import { getSeries, search } from './mangaupdates';
-import { addSeriesSubscription, cacheSeries, checkIfUserSubscribed, getCachedSeries, getUserSubscriptions, removeSeriesSubscription } from "./database";
+import { ActionRowBuilder, ButtonBuilder, ChatInputCommandInteraction, Client, InteractionCallbackResponse, MessageFlags, TextDisplayBuilder } from "discord.js";
+import { addSeriesSubscription, checkIfUserSubscribed, getCachedOrRequestSeries, getUserSubscriptions, removeSeriesSubscription } from "./database";
 import { Series, SubscribedSeriesCache } from "../@types/database.t";
-import { createSearchResultMessage, createSeriesButtons, createSeriesMessage, createUpdateButtons, createUpdateMessage, ERROR_MESSAGE, LOADING_MESSAGE, NO_IMAGE_ATTACHMENT, NO_RESULTS_MESSAGE } from "./message_creation";
+import { createSeriesMessage, createUpdateButtons, createUpdateMessage, LOADING_MESSAGE, NO_IMAGE_ATTACHMENT } from "./message_creation";
 
 
-const MAX_SEARCH_RESULTS = 10;
 const INTERACTION_TIMEOUT = 60_000; // 1_000 = 1s
 
-export const searchCommand = async (interaction: ChatInputCommandInteraction) => {
-    const response = await interaction.reply({ components: [ LOADING_MESSAGE ], flags: MessageFlags.IsComponentsV2, withResponse: true });
-
-    const searchResults = await search(interaction.options.getString('name')!, MAX_SEARCH_RESULTS);
-    if (searchResults === null) 
-        return interaction.editReply({ components: [ ERROR_MESSAGE ], flags: MessageFlags.IsComponentsV2 });
-    else if (searchResults.length === 0)
-        return interaction.editReply({ components: [ NO_RESULTS_MESSAGE ], flags: MessageFlags.IsComponentsV2 })
-
-    const resultComponent = createSearchResultMessage(searchResults);
-
-    await messageInteraction(interaction, response, resultComponent)
-}
-
-const messageInteraction = async (commandInteraction: ChatInputCommandInteraction, response: InteractionCallbackResponse<boolean>, resultsMessage: ContainerBuilder) => {
-    const collectorFilter = (i: any) => i.user.id === commandInteraction.user.id;
-
-    while (true) {
-        commandInteraction.editReply({ components: [ resultsMessage ], flags: MessageFlags.IsComponentsV2 })
-        let responseInteraction;
-        
-        try {
-            responseInteraction = await response.resource?.message?.awaitMessageComponent({ filter: collectorFilter, time: INTERACTION_TIMEOUT });
-        } catch (error) {
-            resultsMessage.spliceComponents(
-                resultsMessage.components.length - 1, 
-                1,
-                new TextDisplayBuilder().setContent(`*Interaction timed out after ${INTERACTION_TIMEOUT / 1_000}s*`)
-            );
-            commandInteraction.editReply({ components: [ resultsMessage ], flags: MessageFlags.IsComponentsV2 })
-            return;
-        }
-
-        if (responseInteraction?.customId !== 'resultSelection') return;
-
-        const seriesId = (responseInteraction as StringSelectMenuInteraction).values[0];
-        const seriesInfo = await getCachedOrRequestSeries(seriesId);
-        const seriesMessage = createSeriesMessage(seriesInfo);
-        // temporary component that will be removed once inside the next loop
-        seriesMessage.addSectionComponents(new SectionBuilder())
-        
-        while (true) {
-            const userSubscribed = await checkIfUserSubscribed(commandInteraction.user.id, seriesId);
-            const buttons = createSeriesButtons(seriesInfo?.url!, userSubscribed);
-
-            seriesMessage.spliceComponents(seriesMessage.components.length - 1, 1, new ActionRowBuilder<ButtonBuilder>().addComponents(buttons));
-            commandInteraction.editReply({ components: [ seriesMessage ], files: [ NO_IMAGE_ATTACHMENT ], flags: MessageFlags.IsComponentsV2 });
-
-            try {
-                responseInteraction = await response.resource?.message?.awaitMessageComponent({ filter: collectorFilter, time: INTERACTION_TIMEOUT });
-            } catch (error) {
-                seriesMessage.spliceComponents(
-                    seriesMessage.components.length - 1, 
-                    1,
-                    new TextDisplayBuilder().setContent(`*Interaction timed out after ${INTERACTION_TIMEOUT / 1_000}s*`)
-                );
-                commandInteraction.editReply({ components: [ seriesMessage ], flags: MessageFlags.IsComponentsV2 });
-                return;
-            }
-
-            if (responseInteraction?.customId === 'back') break;
-            else if (responseInteraction?.customId.startsWith('sub'))
-                await addSeriesSubscription(commandInteraction.user.id, seriesId);
-            else if (responseInteraction?.customId.startsWith('unsub'))
-                await removeSeriesSubscription(commandInteraction.user.id, seriesId);
-            
-            responseInteraction?.deferUpdate();
-        }
-    }
-}
 
 export const subscriptionsCommand = async (interaction: ChatInputCommandInteraction) => {
     const response = await interaction.reply({ components: [ LOADING_MESSAGE ], flags: MessageFlags.IsComponentsV2, withResponse: true });
@@ -151,15 +79,4 @@ export const notifyUsers = async (client: Client, notificationList: Map<string, 
         for (let message of messages) 
             await user.send({ components: message, files: [ NO_IMAGE_ATTACHMENT ], flags: MessageFlags.IsComponentsV2 });
     }
-}
-
-const getCachedOrRequestSeries = async (seriesId: string | number) => {
-    const cachedSeries = await getCachedSeries(seriesId);
-
-    if (cachedSeries && Date.now() - cachedSeries.last_modified.getTime() < 7 * 24 * 60 * 60 * 1000)
-        return cachedSeries;
-
-    const series = await getSeries(seriesId);
-    cacheSeries(series!);
-    return series!; 
 }

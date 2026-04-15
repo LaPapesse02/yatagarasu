@@ -1,6 +1,7 @@
 import { SQL } from "bun";
 import { database } from '../../secrets.yml'
 import { Author, Genre, Series, SubscribedSeries } from "../@types/database.t";
+import { getSeries } from "./mangaupdates";
 
 
 const sql = new SQL({
@@ -14,6 +15,10 @@ const sql = new SQL({
     password: database.password
 });
 
+// the time that has to have passed since last time the series was cached 
+// before mangaupdates is queried again to update it
+// 1_000 = 1s 
+const REFRESH_TIME = 7 * 24 * 60 * 60 * 1_000;  // currently set to 1 week
 
 export const checkIfUserSubscribed = async (userId: string | number, seriesId: string | number): Promise<boolean> => {
     const results: SubscribedSeries[] = await sql`
@@ -177,6 +182,17 @@ export const getCachedSeries = async (seriesId: string | number): Promise<Series
     series.authors = await getCachedAuthors(seriesId);
 
     return series;
+}
+
+export const getCachedOrRequestSeries = async (seriesId: string | number) => {
+    const cachedSeries = await getCachedSeries(seriesId);
+
+    if (cachedSeries && Date.now() - cachedSeries.last_modified.getTime() < REFRESH_TIME)
+        return cachedSeries;
+
+    const series = await getSeries(seriesId);
+    cacheSeries(series!);
+    return series!; 
 }
 
 export const getCachedLatestChapter = async (seriesId: string | number): Promise<number | null> => {

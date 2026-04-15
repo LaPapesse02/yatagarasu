@@ -167,7 +167,8 @@ export const createSeriesButtons = (seriesUrl: string, isSubscribed: boolean) =>
         .setLabel('View on MangaUpdates')
         .setStyle(ButtonStyle.Link)
 
-    return [ backButton, subButton, linkButton ];
+    
+    return new ActionRowBuilder<ButtonBuilder>().addComponents([ backButton, subButton, linkButton ]);
 }
 
 /**
@@ -219,6 +220,21 @@ export const createUpdateButtons = (isFirst: boolean, isLast: boolean, isSubscri
     const nextButton = new ButtonBuilder().setCustomId('next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(isLast);
 
     return [ prevButton, subButton, reloadButton, nextButton ]
+}
+
+/**
+ * removes the action row at the end of the component and replaces 
+ * it with a message showing after how much time the interaction
+ * timed out
+ * 
+ * @param originalMessage - the message to be modified
+ * @param timeoutTime - the message after the action row was removed
+ */
+export const timeoutInteraction = (originalMessage: ContainerBuilder, timeoutTime: number) => {
+    const timeoutMessage = new TextDisplayBuilder().setContent(`*Interaction timed out after ${timeoutTime / 1_000}s*`);
+    const newMessage = originalMessage.spliceComponents(originalMessage.components.length - 1, 1, timeoutMessage);
+
+    return newMessage;
 }
 
 /**
