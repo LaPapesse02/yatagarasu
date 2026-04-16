@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { subscriptionsCommand } from '../../scripts/discord';
+import { subscriptionsCommand } from '../../scripts/discord/subscriptions';
 
 
 export const data = new SlashCommandBuilder()

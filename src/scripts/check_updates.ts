@@ -2,7 +2,7 @@ import { Client } from "discord.js";
 import { Series } from "../@types/database.t";
 import { cacheSeries, getCachedLatestChapter, getSubscribedSeries, getUsersSubscribed } from "./database"
 import { getSeries } from "./mangaupdates";
-import { notifyUsers } from "./discord";
+import { notifyUsers } from "./discord/subscriptions";
 import { sleep } from "bun";
 
 

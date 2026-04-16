@@ -1,4 +1,4 @@
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ComponentBuilder, ContainerBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js"
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ContainerBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js"
 import { Series } from "../@types/database.t";
 
 
@@ -26,6 +26,15 @@ export const ERROR_MESSAGE = (() => {
 export const NO_RESULTS_MESSAGE = (() => {
     let container = new ContainerBuilder();
     let text = new TextDisplayBuilder().setContent('### No results were found!');
+
+    container.setAccentColor(0xC80000); // sets the accent color to red
+    container.addTextDisplayComponents(text);
+
+    return container;
+})()
+export const NO_SUBSCRIPTIONS_MESSAGE = (() => {
+    let container = new ContainerBuilder();
+    let text = new TextDisplayBuilder().setContent('### You aren\'t subscribed to any series!');
 
     container.setAccentColor(0xC80000); // sets the accent color to red
     container.addTextDisplayComponents(text);
@@ -203,23 +212,27 @@ export const createUpdateMessage = (seriesList: Series[]) => {
     return updates;
 }
 
-export const createSubscriptionsButtons = (isFirst: boolean, isLast: boolean, isSubscribed: boolean) => {
-    const prevButton = new ButtonBuilder().setCustomId('prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(isFirst);
-    let subButton;
-    const reloadButton = new ButtonBuilder().setCustomId('reload').setLabel('⟳').setStyle(ButtonStyle.Secondary);
-    if (isSubscribed)
-        subButton = new ButtonBuilder()
-            .setCustomId(`unsub`)
-            .setLabel('Unubscribe!')
-            .setStyle(ButtonStyle.Danger);
-    else
-        subButton = new ButtonBuilder()
-            .setCustomId(`sub`)
-            .setLabel('Subscribe!')
-            .setStyle(ButtonStyle.Primary);
-    const nextButton = new ButtonBuilder().setCustomId('next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(isLast);
+export const createSubscriptionsButtons = (isFirst: boolean, isLast: boolean, seriesUrl: string) => {
+    const prevButton = new ButtonBuilder()
+        .setCustomId('prev')
+        .setLabel('<')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(isFirst);
+    const unsubButton = new ButtonBuilder()
+        .setCustomId(`unsub`)
+        .setLabel('Unubscribe!')
+        .setStyle(ButtonStyle.Danger);
+    const linkButton = new ButtonBuilder()
+        .setURL(seriesUrl)
+        .setLabel('View on MangaUpdates')
+        .setStyle(ButtonStyle.Link)
+    const nextButton = new ButtonBuilder()
+        .setCustomId('next')
+        .setLabel('>')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(isLast);
 
-    return [ prevButton, subButton, reloadButton, nextButton ]
+    return new ActionRowBuilder<ButtonBuilder>().addComponents([ prevButton, unsubButton, linkButton, nextButton ]);
 }
 
 /**
