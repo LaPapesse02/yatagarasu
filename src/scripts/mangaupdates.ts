@@ -3,13 +3,16 @@ import { Author, Genre, Series } from "../@types/database.t";
 const SERIES_SEARCH_URL     = 'https://api.mangaupdates.com/v1/series/search'
 const SERIES_PARTIAL_URL    = 'https://api.mangaupdates.com/v1/series'        // https://api.mangaupdates.com/v1/series/{id}
 
-const NSFW_FILTERS = ['Adult', 'Hentai', 'Smut'] 
+const NSFW_FILTERS = ['Adult', 'Hentai', 'Smut'];
+const DOUJINSHI_FILTERS = ['Doujinshi'];
 
-export const search = async (series: string, maxSearchResults: number, exclude_nsfw: boolean) => {
+export const search = async (series: string, maxSearchResults: number, exclude_nsfw: boolean, exclude_doujinshi: boolean) => {
     const filters: string[] = [];
 
     if (exclude_nsfw)
         filters.push(...NSFW_FILTERS);
+    if (exclude_doujinshi)
+        filters.push(...DOUJINSHI_FILTERS);
 
     const req = await fetch(
         SERIES_SEARCH_URL,

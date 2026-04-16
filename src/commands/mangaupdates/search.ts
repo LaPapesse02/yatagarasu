@@ -15,6 +15,10 @@ export const data = new SlashCommandBuilder()
             .setDescription('Whether to allow NSFW or not')
     )
     .addBooleanOption((option) => 
+        option.setName('allow_doujinshi')
+            .setDescription('Whether to allow doujinshi or not')
+    )
+    .addBooleanOption((option) => 
         option.setName('ephemeral')
             .setDescription('Make this message invisible to other people')
     );
