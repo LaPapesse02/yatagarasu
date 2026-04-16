@@ -1,5 +1,5 @@
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ContainerBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js"
-import { Series } from "../@types/database.t";
+import { Series } from "../../@types/database.t";
 
 
 const MAX_TITLE_LENGTH = 50;
@@ -212,6 +212,13 @@ export const createUpdateMessage = (seriesList: Series[]) => {
     return updates;
 }
 
+/**
+ * creates the buttons shown under the series when viewing subscriptions
+ * 
+ * @param isFirst - whether the series is the first in the array
+ * @param isLast - whether the series is the last in the array
+ * @param seriesUrl - the link to the series' page on mangaupdates
+ */
 export const createSubscriptionsButtons = (isFirst: boolean, isLast: boolean, seriesUrl: string) => {
     const prevButton = new ButtonBuilder()
         .setCustomId('prev')

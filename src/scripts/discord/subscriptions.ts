@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, Client, InteractionCallbackResponse, MessageFlags } from "discord.js";
 import { Series, SubscribedSeriesCache } from "../../@types/database.t";
 import { getCachedOrRequestSeries, getUserSubscriptions, removeSeriesSubscription } from "../database";
-import { createSeriesMessage, createSubscriptionsButtons, createUpdateMessage, LOADING_MESSAGE, NO_IMAGE_ATTACHMENT, NO_SUBSCRIPTIONS_MESSAGE, timeoutInteraction } from "../message_creation";
+import { createSeriesMessage, createSubscriptionsButtons, createUpdateMessage, LOADING_MESSAGE, NO_IMAGE_ATTACHMENT, NO_SUBSCRIPTIONS_MESSAGE, timeoutInteraction } from "./message_creation";
 
 
 const INTERACTION_TIMEOUT = 60_000; // 1_000 = 1s

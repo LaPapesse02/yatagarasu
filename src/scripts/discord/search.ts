@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, ComponentType, InteractionCallbackResponse, MessageFlags, SeparatorBuilder } from "discord.js";
-import { search } from "./mangaupdates";
+import { search } from "../mangaupdates";
 import { LOADING_MESSAGE, ERROR_MESSAGE, NO_RESULTS_MESSAGE, createSearchResultMessage, timeoutInteraction, createSeriesMessage, createSeriesButtons } from "./message_creation";
-import { addSeriesSubscription, checkIfUserSubscribed, getCachedOrRequestSeries, removeSeriesSubscription } from "./database";
+import { addSeriesSubscription, checkIfUserSubscribed, getCachedOrRequestSeries, removeSeriesSubscription } from "../database";
 
 
 const MAX_SEARCH_RESULTS = 10;

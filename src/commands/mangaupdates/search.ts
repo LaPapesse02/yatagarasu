@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { searchCommand } from '../../scripts/search';
+import { searchCommand } from '../../scripts/discord/search';
 
 
 export const data = new SlashCommandBuilder()
