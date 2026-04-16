@@ -12,11 +12,17 @@ const INTERACTION_TIMEOUT = 60_000; // 1_000 = 1s
  * @param interaction the interaction of the command
  */
 export const subscriptionsCommand = async (interaction: ChatInputCommandInteraction) => {
+    let flags = MessageFlags.IsComponentsV2;
+    const isEphemeral = interaction.options.getBoolean('ephemeral')?.valueOf() === undefined || interaction.options.getBoolean('ephemeral')
+    
+    if (isEphemeral)
+        flags = flags + MessageFlags.Ephemeral;
+
     // immediately respond to the user so that they know the
     // command is working
     const response = await interaction.reply({
         components: [ LOADING_MESSAGE ],
-        flags: MessageFlags.IsComponentsV2,
+        flags: flags,
         withResponse: true
     });
 

@@ -9,6 +9,10 @@ export const data = new SlashCommandBuilder()
         option.setName('name')
             .setDescription('The name of the series to search')
             .setRequired(true)
+    )
+    .addBooleanOption((option) => 
+        option.setName('ephemeral')
+            .setDescription('Make this message invisible to other people')
     );
     
 export async function execute(interaction: ChatInputCommandInteraction) {

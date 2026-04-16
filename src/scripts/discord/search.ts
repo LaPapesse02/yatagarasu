@@ -13,12 +13,17 @@ const INTERACTION_TIMEOUT = 60_000; // 1_000 = 1s
  * @param interaction - the user interaction
  */
 export const searchCommand = async (interaction: ChatInputCommandInteraction) => {
+    let flags = MessageFlags.IsComponentsV2;
+    
+    if (interaction.options.getBoolean('ephemeral'))
+        flags = flags + MessageFlags.Ephemeral;
+
     // immediately respond to the user so that they know the
     // command is working
     const response = await interaction.reply({
         components: [ LOADING_MESSAGE ],
-        flags: MessageFlags.IsComponentsV2,
-        withResponse: true
+        flags: flags,
+        withResponse: true,
     });
 
     // search the user's query on mangaupdates
