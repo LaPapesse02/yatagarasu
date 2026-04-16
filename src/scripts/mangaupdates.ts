@@ -3,14 +3,23 @@ import { Author, Genre, Series } from "../@types/database.t";
 const SERIES_SEARCH_URL     = 'https://api.mangaupdates.com/v1/series/search'
 const SERIES_PARTIAL_URL    = 'https://api.mangaupdates.com/v1/series'        // https://api.mangaupdates.com/v1/series/{id}
 
+const NSFW_FILTERS = ['Adult', 'Hentai', 'Smut'] 
 
-export const search = async (series: string, maxSearchResults: number) => {
+export const search = async (series: string, maxSearchResults: number, exclude_nsfw: boolean) => {
+    const filters: string[] = [];
+
+    if (exclude_nsfw)
+        filters.push(...NSFW_FILTERS);
+
     const req = await fetch(
         SERIES_SEARCH_URL,
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ search: series })
+            body: JSON.stringify({
+                search: series,
+                exclude_genre: filters
+            })
         }
     );
 

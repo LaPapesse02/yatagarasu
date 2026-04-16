@@ -26,8 +26,10 @@ export const searchCommand = async (interaction: ChatInputCommandInteraction) =>
         withResponse: true,
     });
 
+    const exclude_nsfw = !interaction.options.getBoolean('allow_nsfw');
+
     // search the user's query on mangaupdates
-    const results = await search(interaction.options.getString('name')!, MAX_SEARCH_RESULTS);
+    const results = await search(interaction.options.getString('name')!, MAX_SEARCH_RESULTS, exclude_nsfw);
 
     // quit if no results were found or if mangaupdates returned an error
     if (results === null) 
