@@ -1,10 +1,14 @@
 import { Author, Genre, Series } from "../@types/database.t";
+import { shortenString } from "./helper";
 
 const SERIES_SEARCH_URL     = 'https://api.mangaupdates.com/v1/series/search'
 const SERIES_PARTIAL_URL    = 'https://api.mangaupdates.com/v1/series'        // https://api.mangaupdates.com/v1/series/{id}
 
 const NSFW_FILTERS = ['Adult', 'Hentai', 'Smut'];
 const DOUJINSHI_FILTERS = ['Doujinshi'];
+
+const TITLE_MAX_LENGTH = 300;
+const DESCRIPTION_MAX_LENGTH = 3000;
 
 export const search = async (series: string, maxSearchResults: number, exclude_nsfw: boolean, exclude_doujinshi: boolean) => {
     const filters: string[] = [];
@@ -44,8 +48,14 @@ export const getSeries = async (seriesId: string | number) => {
 
     const series: Series = {
         id: responseContent.series_id,
-        title: responseContent.title,
-        description: responseContent.description,
+        title: shortenString(
+            responseContent.title,
+            TITLE_MAX_LENGTH
+        ),
+        description: shortenString(
+            responseContent.description, 
+            DESCRIPTION_MAX_LENGTH
+        ),
         year: responseContent.year,
         completed: responseContent.completed,
         url: responseContent.url,

@@ -1,8 +1,11 @@
 import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ContainerBuilder, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextDisplayBuilder } from "discord.js"
 import { Series } from "../../@types/database.t";
+import { shortenString } from "../helper";
 
 
-const MAX_TITLE_LENGTH = 50;
+const SHORT_TITLE_MAX_LENGTH = 50;
+const AUTHORS_MAX_LENGTH = 300;
+const GENRES_MAX_LENGTH = 300;
 
 export const NO_IMAGE_ATTACHMENT = new AttachmentBuilder('./resources/no_image.jpg');
 
@@ -59,7 +62,7 @@ export const createSearchResultMessage = (results: any[]) => {
     let resultString = '## Search results:\n';
 
     results.map((result) => result.record).forEach((result, index) => {
-        const shortTitle = shortenString(result.title, MAX_TITLE_LENGTH);
+        const shortTitle = shortenString(result.title, SHORT_TITLE_MAX_LENGTH);
         // creates a list in the message that looks like:
         // 1. **series 1** (release year)
         // 2. **series 2** (release year)
@@ -109,11 +112,14 @@ export const createSeriesMessage = (series: Series) => {
     });
     // we then add the authors and their roles to the title section
     titleText = titleText.concat(
-        authors
-            .entries()
-            .map(([author, types]) => `${author} (${types.join(', ')})`)
-            .toArray()
-            .join(', ')
+        shortenString(
+            authors
+                .entries()
+                .map(([author, types]) => `${author} (${types.join(', ')})`)
+                .toArray()
+                .join(', '),
+            AUTHORS_MAX_LENGTH
+        )
     );
 
     titleSection.addTextDisplayComponents(new TextDisplayBuilder().setContent(titleText));
@@ -133,7 +139,11 @@ export const createSeriesMessage = (series: Series) => {
         // puts an invisible divider between the description and the genres
         container.addSeparatorComponents(new SeparatorBuilder().setDivider(false));
     }
-    const genresText = `**Genres:**\n${series.genres?.map((genre) => genre.genre).join(', ')}`;
+    const joinedGenres = shortenString(
+        series.genres?.map((genre) => genre.genre).join(', ')!,
+        GENRES_MAX_LENGTH
+    );
+    const genresText = `**Genres:**\n${joinedGenres}`;
     container.addTextDisplayComponents(new TextDisplayBuilder().setContent(genresText));
 
     // adds a divider between the genres and the buttons
@@ -256,17 +266,3 @@ export const timeoutInteraction = (originalMessage: ContainerBuilder, timeoutTim
 
     return newMessage;
 }
-
-/**
- * shortens the string when it's longer than the limit and if it does
- * adds '…' at the end to show that it was truncated.
- * 
- * @param text - the text to shorten
- * @param maxLength - the point at which the text will be truncated
- */
-const shortenString = (text: string, maxLength: number) => {
-    if (text.length <= maxLength)
-        return text;
-    
-    return `${text.slice(0, maxLength)}…`;
-} 
