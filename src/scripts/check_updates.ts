@@ -34,7 +34,7 @@ const getUpdates = async (client: Client) => {
 
         if (seriesInfo?.latest_chapter != cachedChapter)
             updatedSeries.push(seriesInfo)
-            await cacheSeries(seriesInfo)
+        await cacheSeries(seriesInfo)
     }
 
     const notificationList = await createNotificationLists(updatedSeries);
