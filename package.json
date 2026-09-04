@@ -14,6 +14,7 @@
   "scripts": {
     "dev": "bun run src/index.ts",
     "registerCommands": "bun run registerGuildCommands.ts",
+    "setupDb": "bun run generateTables.ts",
     "prod": "bun --production run src/index.ts"
   }
 }
